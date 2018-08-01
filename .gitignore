@@ -2,4 +2,5 @@
 *.un~
 *.pyc
 .DS_Store
-
+images
+schema
