@@ -1,16 +1,18 @@
 import os
 import json
 
+BASE_DIR = "./images/"
+
 blacklist = ['.git', '.DS_Store']
-directories = [name for name in os.listdir(".") if os.path.isdir(name) and name not in blacklist]
+directories = [name for name in os.listdir(BASE_DIR) if os.path.isdir(BASE_DIR + name) and name not in blacklist]
 
 schema = {}
 
 for directory in directories:
     cur_type = schema[directory] = {}
-    subdirs = [name for name in os.listdir("./" + directory) if name not in blacklist]
+    subdirs = [name for name in os.listdir(BASE_DIR + directory) if name not in blacklist]
     for subdir in subdirs:
-        items = [name for name in os.listdir("./" + directory + "/" + subdir) if name not in blacklist]
+        items = [name for name in os.listdir(BASE_DIR + directory + "/" + subdir) if name not in blacklist]
         for item in items:
             name = item[:-4]
             if '\xc2\xae' in name:
@@ -20,9 +22,11 @@ for directory in directories:
             if '_' in name:
                 name = name.replace('_', ' ')
             if name:
+                path = directory + "/" + subdir + "/" + item
                 cur_type[name] = {
                     'quality': subdir,
                     'image': item,
+                    'path': path
                 }
 
 

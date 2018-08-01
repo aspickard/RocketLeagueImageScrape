@@ -6,7 +6,7 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-
+BASE_PATH = "images/"
 
 def wikia_scrape():
     print('Wikia Scrape Started')
@@ -40,7 +40,8 @@ def wikia_scrape():
                 if tag_name == 'h2':
                     rarity = rarity_span.span.get_text().replace('Wheels', '').replace('Toppers', '').strip()
                     break
-            # iterate through each of these dvis
+
+            # iterate through each of these divs
             for b in b_tree:
                 # from each div, find all <a>'s (anchors/hyperlinks)
                 c_tree = b.find_all('a')
@@ -86,7 +87,7 @@ def wikia_scrape():
                                         break
 
                                 # where to save the files
-                                file_path = "{}/{}/{}/{}.png".format(key, rarity, item, name)
+                                file_path = BASE_PATH + "{}/{}/{}/{}.png".format(key, rarity, item, name)
                                 print('Getting', name)
 
                                 # the directory of the file_path
@@ -140,7 +141,7 @@ def rl_scrape():
             rarity = t.div.get_text().strip()
 
             # set up the file path
-            file_path = "{}/{}/{}.png".format(key, rarity, name)
+            file_path = BASE_PATH + "{}/{}/{}.png".format(key, rarity, name)
 
             # shows the current object
             print('Getting', name)
