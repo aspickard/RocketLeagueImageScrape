@@ -2,6 +2,10 @@ import requests
 import shutil
 import os
 from bs4 import BeautifulSoup as BS
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
 def wikia_scrape():
     
     print('Wikia Scrape Started')
@@ -116,7 +120,7 @@ def get_tree_wikia(sub):
 def rl_scrape():    
     # Started!
     print('rl Scrape started')
-    items = {'bodies', 'wheels', 'boosts', 'antennas', 'decals', 'toppers'}
+    items = {'bodies', 'wheels', 'boosts', 'antennas', 'decals', 'toppers', 'trails', 'explosions', 'paints', 'banners'}
     
     # iterate through each item in items
     for key in items:
