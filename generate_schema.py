@@ -30,4 +30,9 @@ for directory in directories:
                 }
 
 
+with open('schema/schema.js', 'w') as schema_file:
+    schema_file.write('/* eslint-disable */\n')
+    schema_file.write('export default ')
+    schema_file.write(json.dumps(schema, indent=4, sort_keys=True))
+
 print json.dumps(schema, indent=4, sort_keys=True)

@@ -115,7 +115,8 @@ def get_tree_wikia(sub):
 def rl_scrape():
     # Started!
     print('rl Scrape started')
-    items = {'bodies', 'wheels', 'boosts', 'antennas', 'decals', 'toppers', 'trails', 'explosions', 'paints', 'banners'}
+    items = {'bodies', 'wheels', 'boosts', 'antennas', 'decals', 'toppers', 'trails', 'explosions', 'paints',
+             'banners', 'engines', 'borders', 'titles', 'crates'}
 
     # iterate through each item in items
     for key in items:
@@ -178,7 +179,7 @@ def get_tree(url):
 def main():
     print('Duel Scrape Started')
     rl_scrape()
-    wikia_scrape()
+    #wikia_scrape()
     print('Duel Scrape Completed')
 
 main()
