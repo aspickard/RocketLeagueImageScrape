@@ -15,10 +15,8 @@ for directory in directories:
         items = [name for name in os.listdir(BASE_DIR + directory + "/" + subdir) if name not in blacklist]
         for item in items:
             name = item[:-4]
-            if '\xc2\xae' in name:
-                name = name.replace('\xc2\xae', '')
             if '619' in name:
-                name = name.replace('\xc3\xa4', '')
+                name = name.replace('\xc3\xa4', 'a')
             if '_' in name:
                 name = name.replace('_', ' ')
             if name:
