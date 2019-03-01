@@ -29,6 +29,17 @@ for directory in directories:
                     'path': path
                 }
 
+del schema['crates']['Decryptor']
+
+schema['key'] = {'Key': schema['crates']['Key']}
+del schema['crates']['Key']
+schema['offers'] = {
+    'Offers': {
+        'path': 'offers/Common/Offers.png',
+        'image': 'Offers.png',
+        'quality': 'Common'
+    }
+}
 
 with open('schema/schema.js', 'w') as schema_file:
     schema_file.write('/* eslint-disable */\n')
