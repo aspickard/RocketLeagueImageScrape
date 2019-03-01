@@ -10,15 +10,17 @@ sys.setdefaultencoding('utf-8')
 BASE_PATH = "images/"
 
 ALL_ITEM_NAMES = {}
-ITEM_NAMES = {}
-AMBIGUOUS_NAMES = {}
-DEBUG_LEVEL = 1
+DEBUG_LEVEL = 3
+
+COMMON_PAINTED_KEYS = ['bodies', 'boosts', 'toppers', 'wheels']
 
 def is_tradeable(key, name, rarity, platform):
-    return rarity != 'Premium' and platform == 'All' and (rarity != 'Common' or key != 'decals')
+    return (rarity != 'Premium' or name == 'Key') and platform == 'All' and (rarity != 'Common' or key in COMMON_PAINTED_KEYS)
 
-def scrape(download=True, ambiguous=None):
+def scrape(download=True, redownload=False, ambiguous=None):
     info('RL Garage Scrape Started')
+    ITEM_NAMES = {}
+    AMBIGUOUS_NAMES = {}
     items = {'bodies', 'wheels', 'boosts', 'antennas', 'decals', 'toppers', 'trails', 'explosions', 'paints',
              'banners', 'engines', 'borders', 'titles', 'crates'}
 
@@ -58,6 +60,7 @@ def scrape(download=True, ambiguous=None):
                     warning("Guessing at name {0} ({1})".format(name, category))
 
                 name = '{0} ({1})'.format(name, category)
+                warning("Correcting ambiguous name {0}".format(name))
 
             # get the rarity of the item
             rarity = t.div.get_text().strip()
@@ -82,7 +85,7 @@ def scrape(download=True, ambiguous=None):
                 # shows the current object
                 info('Detected {0} - {1} - {2}'.format(key, rarity, name))
 
-                if download:
+                if download and (not os.path.exists(file_path) or redownload):
                     try:
                         # get the directory of the file path
                         directory = os.path.dirname(file_path)
@@ -109,6 +112,7 @@ def scrape(download=True, ambiguous=None):
     info('RL Garage Scrape Complete')
     info('{} unique items discovered'.format(count_values(ITEM_NAMES)))
     info('{} ambiguous item names discovered'.format(count_values(AMBIGUOUS_NAMES)))
+    info(AMBIGUOUS_NAMES)
     if new_ambiguous:
         print('WARNING - Potential new ambiguous names detected.')
         print(new_ambiguous)
