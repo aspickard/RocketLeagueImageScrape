@@ -6,120 +6,28 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
+
 BASE_PATH = "images/"
 
-def wikia_scrape():
-    print('Wikia Scrape Started')
-    items = ['wheels', 'toppers']
-    colors = ['_black', '_burnt_sienna', '_cobalt', '_crimson', '_forest_green', '_grey', '_lime', '_orange', '_pink', '_purple', '_saffron', '_sky_blue', '_titanium_white']
-    # Go through each item of items
-    for key in items:
-        # Get the tree for the item, and from that tree, find all the <div>'s with the wikia-gallery class
-        # It will retry until it gets the correct tree
-        while True:
-            base_tree = get_tree_wikia(key)
-            rarity_tree = base_tree.find_all('span', class_='mw-headline')
-            a_tree = base_tree.find_all('div', class_='wikia-gallery')
+ALL_ITEM_NAMES = {}
+ITEM_NAMES = {}
+AMBIGUOUS_NAMES = {}
+DEBUG_LEVEL = 1
 
-            if len(a_tree) > 0:
-                break
+def is_tradeable(key, name, rarity, platform):
+    return rarity != 'Premium' and platform == 'All' and (rarity != 'Common' or key != 'decals')
 
-        # iterate over each div in the tree
-        for a in a_tree:
-            # from each div, find all the divs with the 'wikia-gallery-item' class
-            b_tree = a.find_all('div', class_='wikia-gallery-item')
-
-            # get the rarity by searching for the h2 somewhere above the current div
-            rarity_span = a
-            while True: 
-                rarity_span = rarity_span.previous_sibling
-                try:
-                    tag_name = rarity_span.name
-                except AttributeError:
-                    tag_name = ''
-                if tag_name == 'h2':
-                    rarity = rarity_span.span.get_text().replace('Wheels', '').replace('Toppers', '').strip()
-                    break
-
-            # iterate through each of these divs
-            for b in b_tree:
-                # from each div, find all <a>'s (anchors/hyperlinks)
-                c_tree = b.find_all('a')
-
-                # iterate through each of these anchors
-                for c in c_tree:
-                    # gets the link (href attribute) from the anchor
-                    href = c['href']
-
-                    # continues if the href doesn't contain file
-                    # this prevents the program from trying to get items that only have one color, or at least one color on the page
-                    # items with all the colors will link directly to that item page
-                    if 'File:' not in href:
-                        # remove the /wiki/ at the start of the hyperlink
-                        # our get_tree function already has this included, so we can remove it
-                        href = href.replace("/wiki/", "")
-
-                        # gets a tree from the item page, and find all the div's with the 'wikia-gallery-item' class
-                        d_tree = get_tree_wikia(href).find_all('div', class_='wikia-gallery-item')
-
-                        # iterate through each of these divs
-                        for d in d_tree:
-                            # gets a tree from where the <a> 'href' attribute where <a> is the child of the current div
-                            # from this new tree, find all the div's with the 'fullMedia' class
-                            # these classes contain the links to the images
-                            e_tree = get_tree_wikia(d.a["href"].replace("/wiki/", "")).find_all('div', class_='fullMedia')
-
-                            # iterate through each of these new divs
-                            for e in e_tree:
-                                # set the link to the <a> of the div
-                                link = e.a
-
-                                # set the picture src to the href of the anchor
-                                src = link["href"]
-
-                                # set the name to the text of the link
-                                name = link.get_text().strip().replace('.png', '').replace('_topper', '')
-
-                                # sets the item name as follows - visor_sky_blue.png, it will find _sky_blue, remove it, which will leave it with visor.png
-                                for color in colors:
-                                    if color in name:
-                                        item = name.replace(color, '')
-                                        break
-
-                                # where to save the files
-                                file_path = BASE_PATH + "{}/{}/{}/{}.png".format(key, rarity, item, name)
-                                print('Getting', name)
-
-                                # the directory of the file_path
-                                directory = os.path.dirname(file_path)
-
-                                # creates the directory if it doesn't exist
-                                if not os.path.exists(directory):
-                                    os.makedirs(directory)
-
-                                # requests the image and the src link, until the status code is 200 (successful)
-                                while True:
-                                    r = requests.get(src, stream=True, headers={'User-agent': 'Mozilla/5.0'})
-                                    if r.status_code == 200:
-                                        break
-                                # create/open the file at the file_path, and write the contents of the picture in the file
-                                with open(file_path, 'wb') as f:
-                                    r.raw.decode_content = True
-                                    shutil.copyfileobj(r.raw, f)
-    print('Wikia Scrape Done!')
-
-# Gets the Beatiful Soup tree to make things easier
-def get_tree_wikia(sub):
-    return get_tree("http://rocketleague.wikia.com/wiki/" + sub)
-
-def rl_scrape():
-    # Started!
-    print('rl Scrape started')
+def scrape(download=True, ambiguous=None):
+    info('RL Garage Scrape Started')
     items = {'bodies', 'wheels', 'boosts', 'antennas', 'decals', 'toppers', 'trails', 'explosions', 'paints',
              'banners', 'engines', 'borders', 'titles', 'crates'}
 
+    new_ambiguous = []
     # iterate through each item in items
     for key in items:
+        ALL_ITEM_NAMES[key] = []
+        ITEM_NAMES[key] = []
+        AMBIGUOUS_NAMES[key] = []
         # try to get the site tree until it returns properly
         while True:
             # tree is getting all the divs with the class 'rlg-items-item'
@@ -135,37 +43,76 @@ def rl_scrape():
             # get the imgae source from that <img> tag
             src = ("https://rocket-league.com" + img['src']).strip()
 
-            # get the same of the item
+            # get the name of the item
             name = t.h2.get_text().strip().replace(" ", "_")
+
+            if ambiguous and name in ambiguous[key]:
+                category = t.parent.find_previous_sibling('h2').get_text().strip()
+                cat = [x for x in ALL_ITEM_NAMES['bodies'] if x.replace("_", " ").lower() == category]
+
+                # Fix the name of the category
+                if len(cat) == 1:
+                    category = cat[0].replace("_", " ")
+                else:
+                    category = category.title()
+                    warning("Guessing at name {0} ({1})".format(name, category))
+
+                name = '{0} ({1})'.format(name, category)
 
             # get the rarity of the item
             rarity = t.div.get_text().strip()
 
-            # set up the file path
-            file_path = BASE_PATH + "{}/{}/{}.png".format(key, rarity, name)
+            # get the platform
+            platform = t.find_all('div', attrs={'data-platform': True})[0]['data-platform']
 
-            # shows the current object
-            print('Getting', name)
+            #import pdb; pdb.set_trace()
 
-            # get the directory of the file path
-            directory = os.path.dirname(file_path)
+            ALL_ITEM_NAMES[key].append(name)
+            if is_tradeable(key, name, rarity, platform):
+                if name in ITEM_NAMES[key] and name not in AMBIGUOUS_NAMES[key]:
+                    AMBIGUOUS_NAMES[key].append(name)
+                    if ambiguous and name not in ambiguous[key]:
+                        new_ambiguous.append('{0} {1} {2}'.format(key, rarity, name))
 
-            # if the directory doesn't exist, create it
-            if not os.path.exists(directory):
-                os.makedirs(directory)
+                ITEM_NAMES[key].append(name)
 
-            # request the image at the src, until the status code returned is 200 (successful)
-            while True:
-                r = requests.get(src, stream=True, headers={'User-agent': 'Mozilla/5.0'})
-                if r.status_code == 200:
-                    break
+                # set up the file path
+                file_path = BASE_PATH + "{}/{}/{}.png".format(key, rarity, name)
 
-            # create/open the file, and write the contents of the image downloaded into it
-            with open(file_path, 'wb') as f:
-                r.raw.decode_content = True
-                shutil.copyfileobj(r.raw, f)
+                # shows the current object
+                info('Detected {0} - {1} - {2}'.format(key, rarity, name))
+
+                if download:
+                    try:
+                        # get the directory of the file path
+                        directory = os.path.dirname(file_path)
+
+                        # if the directory doesn't exist, create it
+                        if not os.path.exists(directory):
+                            os.makedirs(directory)
+
+                        # request the image at the src, until the status code returned is 200 (successful)
+                        while True:
+                            r = requests.get(src, stream=True, headers={'User-agent': 'Mozilla/5.0'})
+                            if r.status_code == 200:
+                                break
+
+                        # create/open the file, and write the contents of the image downloaded into it
+                        with open(file_path, 'wb') as f:
+                            r.raw.decode_content = True
+                            shutil.copyfileobj(r.raw, f)
+
+                        info('Downloaded {0} - {1} - {2}'.format(key, rarity, name))
+                    except:
+                        error('Failed to downloaded {0} - {1} - {2}'.format(key, rarity, name))
     # Completed!
-    print('rl Scrape Done!')
+    info('RL Garage Scrape Complete')
+    info('{} unique items discovered'.format(count_values(ITEM_NAMES)))
+    info('{} ambiguous item names discovered'.format(count_values(AMBIGUOUS_NAMES)))
+    if new_ambiguous:
+        print('WARNING - Potential new ambiguous names detected.')
+        print(new_ambiguous)
+    return AMBIGUOUS_NAMES
 
 def get_tree_rl(sub):
     return get_tree("https://rocket-league.com/items/" + sub)
@@ -176,10 +123,24 @@ def get_tree(url):
     # Returns the Beatiful SouptTree
     return BS(page.content, 'html.parser')
 
+def count_values(items):
+    return sum(len(v) for v in items.itervalues())
+
 def main():
-    print('Duel Scrape Started')
-    rl_scrape()
-    #wikia_scrape()
-    print('Duel Scrape Completed')
+    ambiguous = scrape(download=False)
+    scrape(download=True, ambiguous=ambiguous)
+
+def info(text):
+    debugPrint(text, 3)
+
+def warning(text):
+    debugPrint(text, 2)
+
+def error(text):
+    debugPrint(text, 1)
+
+def debugPrint(text, level):
+    if level <= DEBUG_LEVEL:
+        print(text)
 
 main()
