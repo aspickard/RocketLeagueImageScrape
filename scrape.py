@@ -49,18 +49,21 @@ def scrape(download=True, redownload=False, ambiguous=None):
             name = t.h2.get_text().strip().replace(" ", "_")
 
             if ambiguous and name in ambiguous[key]:
-                category = t.parent.find_previous_sibling('h2').get_text().strip()
-                cat = [x for x in ALL_ITEM_NAMES['bodies'] if x.replace("_", " ").lower() == category]
+                try:
+                    category = t.parent.find_previous_sibling('h2').get_text().strip()
+                    cat = [x for x in ALL_ITEM_NAMES['bodies'] if x.replace("_", " ").lower() == category]
 
-                # Fix the name of the category
-                if len(cat) == 1:
-                    category = cat[0].replace("_", " ")
-                else:
-                    category = category.title()
-                    warning("Guessing at name {0} ({1})".format(name, category))
+                    # Fix the name of the category
+                    if len(cat) == 1:
+                        category = cat[0].replace("_", " ")
+                    else:
+                        category = category.title()
+                        warning("Guessing at name {0} ({1})".format(name, category))
 
-                name = '{0} ({1})'.format(name, category)
-                warning("Correcting ambiguous name {0}".format(name))
+                    name = '{0} ({1})'.format(name, category)
+                    warning("Correcting ambiguous name {0}".format(name))
+                except:
+                    warning("Could not correct ambiguous name {0}".format(name))
 
             # get the rarity of the item
             rarity = t.div.get_text().strip()
