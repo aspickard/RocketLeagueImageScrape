@@ -3,4 +3,5 @@
 *.pyc
 .DS_Store
 images
+bkp_images
 schema

@@ -48,21 +48,36 @@ def scrape(download=True, redownload=False, ambiguous=None):
             # get the name of the item
             name = t.h2.get_text().strip().replace(" ", "_")
 
+            esports = False
+
             if ambiguous and name in ambiguous[key]:
                 try:
-                    category = t.parent.find_previous_sibling('h2').get_text().strip()
-                    cat = [x for x in ALL_ITEM_NAMES['bodies'] if x.replace("_", " ").lower() == category]
+                    if key == 'crates':
+                        if name in ITEM_NAMES[key]:
+                            name = '{} ({})'.format(name, '2019')
+                            warning("Correcting ambiguous name {0}".format(name))
+                    elif key == 'wheels':
+                        next_header = t.find_next('div', class_='row').get_text().strip()
 
-                    # Fix the name of the category
-                    if len(cat) == 1:
-                        category = cat[0].replace("_", " ")
+                        if next_header != 'Esports items':
+                            esports = True
+                            info("Esports item detected {}".format(name))
                     else:
-                        category = category.title()
-                        warning("Guessing at name {0} ({1})".format(name, category))
+                        category = t.parent.find_previous_sibling('h2').get_text().strip()
+                        cat = [x for x in ALL_ITEM_NAMES['bodies'] if x.replace("_", " ").lower() == category]
 
-                    name = '{0} ({1})'.format(name, category)
-                    warning("Correcting ambiguous name {0}".format(name))
-                except:
+                        # Fix the name of the category
+                        if len(cat) == 1:
+                            category = cat[0].replace("_", " ")
+                        else:
+                            category = category.title()
+                            warning("Guessing at name {0} ({1})".format(name, category))
+
+                        name = '{0} ({1})'.format(name, category)
+
+                    if not esports:
+                        warning("Correcting ambiguous name {0}".format(name))
+                except Exception as e:
                     warning("Could not correct ambiguous name {0}".format(name))
 
             # get the rarity of the item
@@ -74,7 +89,7 @@ def scrape(download=True, redownload=False, ambiguous=None):
             #import pdb; pdb.set_trace()
 
             ALL_ITEM_NAMES[key].append(name)
-            if is_tradeable(key, name, rarity, platform):
+            if is_tradeable(key, name, rarity, platform) and not esports:
                 if name in ITEM_NAMES[key] and name not in AMBIGUOUS_NAMES[key]:
                     AMBIGUOUS_NAMES[key].append(name)
                     if ambiguous and name not in ambiguous[key]:
@@ -135,7 +150,7 @@ def count_values(items):
 
 def main():
     ambiguous = scrape(download=False)
-    scrape(download=True, ambiguous=ambiguous)
+    scrape(download=True, ambiguous=ambiguous, redownload=True)
 
 def info(text):
     debugPrint(text, 3)
