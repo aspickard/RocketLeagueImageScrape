@@ -150,7 +150,7 @@ def count_values(items):
 
 def main():
     ambiguous = scrape(download=False)
-    scrape(download=True, ambiguous=ambiguous, redownload=True)
+    scrape(download=True, ambiguous=ambiguous)
 
 def info(text):
     debugPrint(text, 3)
