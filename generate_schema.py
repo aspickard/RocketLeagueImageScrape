@@ -1,5 +1,6 @@
 import os
 import json
+import requests
 
 BASE_DIR = "./images/"
 
@@ -44,4 +45,14 @@ with open('schema/schema.js', 'w') as schema_file:
     schema_file.write('export default ')
     schema_file.write(json.dumps(schema, indent=4, sort_keys=True))
 
-print json.dumps(schema, indent=4, sort_keys=True)
+print("RLGarage schema generated.")
+
+gf_schema = "https://gameflip.com/api/gameitem/inventory/812872018935"
+r = requests.get(gf_schema, headers={'User-agent': 'Mozilla/5.0'})
+
+with open('schema/rl-schema.json', 'w') as schema_file:
+    schema_file.write(r.text)
+
+print("GameFlip schema generated.")
+
+# print json.dumps(schema, indent=4, sort_keys=True)

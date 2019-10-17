@@ -1,0 +1,11 @@
+certifi==2019.9.11
+chardet==3.0.4
+idna==2.8
+pbr==3.1.1
+requests==2.22.0
+six==1.11.0
+stevedore==1.28.0
+urllib3==1.25.6
+virtualenv==15.2.0
+virtualenv-clone==0.3.0
+virtualenvwrapper==4.7.2
