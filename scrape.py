@@ -15,7 +15,7 @@ DEBUG_LEVEL = 3
 COMMON_PAINTED_KEYS = ['bodies', 'boosts', 'toppers', 'wheels']
 
 def is_tradeable(key, name, rarity, platform):
-    return (rarity != 'Premium' or name == 'Key') and platform == 'All' and (rarity != 'Common' or key in COMMON_PAINTED_KEYS)
+    return (rarity != 'Premium' or name == 'Credits') and platform == 'All' and (rarity != 'Common' or key in COMMON_PAINTED_KEYS)
 
 def scrape(download=True, redownload=False, ambiguous=None):
     info('RL Garage Scrape Started')
@@ -81,7 +81,12 @@ def scrape(download=True, redownload=False, ambiguous=None):
                     warning("Could not correct ambiguous name {0}".format(name))
 
             # get the rarity of the item
-            rarity = t.div.get_text().strip()
+            #rarity = t.div.get_text().strip()
+            rarity = t.div.find('div').attrs['class'][1]
+            if rarity == "BlackMarket":
+                rarity = "Black Market"
+            elif rarity == "VeryRare":
+                rarity = "Very Rare"
 
             # get the platform
             platform = t.find_all('div', attrs={'data-platform': True})[0]['data-platform']

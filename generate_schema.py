@@ -29,9 +29,11 @@ for directory in directories:
                 }
 
 del schema['crates']['Decryptor']
-
-schema['key'] = {'Key': schema['crates']['Key']}
 del schema['crates']['Key']
+
+schema['credits'] = {'Credits': schema['crates']['Credits']}
+schema['key'] = {'Key': schema['crates']['Credits']}
+del schema['crates']['Credits']
 schema['offers'] = {
     'Offers': {
         'path': 'offers/Common/Offers.png',
